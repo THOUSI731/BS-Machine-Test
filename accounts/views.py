@@ -6,11 +6,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .api.serializers import (
     MyTokenObtainPairSerializer,
     UserAccountSerializer,
-    UserProfileSerialier,
+    UserSerializer,
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from .models import Account
+from django.shortcuts import get_object_or_404
+
 
 class UserRegisterationAPIView(APIView):
     def post(self, request, *args, **kwargs):
@@ -25,6 +27,7 @@ class UserRegisterationAPIView(APIView):
             user.set_password(serializer.validated_data["password"])
             user.save(update_fields=["password"])
             UserProfile.objects.create(user=user)
+            
             return Response(
                 {"msg": "Registeration Successful", "data": serializer.data},
                 status=status.HTTP_201_CREATED,
@@ -41,10 +44,15 @@ class UserProfileDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        user=Account.objects.filter(email=request.user).select_related('profile')
-        return Response(UserProfileSerialier(user).data, status=status.HTTP_200_OK)
+        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
         instance = UserProfile.objects.filter(user_id=request.user.id)
-        print(instance)
+        serializer=UserSerializer(data=request.data,user=request.user)
+        if serializer.is_valid():
+             instance.profile_picture=serializer.validated_data.get("profile_picture",instance.profile_picture)
+             instance.date_of_birth = serializer.validated_data.get("date_of_birth",instance.date_of_birth)
+             instance.save()
+             return Response(serializer.data,status=status.HTTP_200_OK)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)  
         

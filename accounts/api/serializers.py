@@ -30,11 +30,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 class UserProfileSerialier(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = "__all__"
+        exclude = ("user",)
 
 class UserSerializer(serializers.ModelSerializer):
      profile=UserProfileSerialier()
      class Meta:
           model=Account
-          fields="__all__"          
+          exclude=("password",)      
 
